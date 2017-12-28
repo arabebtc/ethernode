@@ -1,0 +1,186 @@
+// Copyright (c) 2010 Satoshi Nakamoto
+// Copyright (c) 2009-2012 The Bitcoin developers
+// Distributed under the MIT/X11 software license, see the accompanying
+// file COPYING or http://www.opensource.org/licenses/mit-license.php.
+
+#include "assert.h"
+
+#include "chainparams.h"
+#include "main.h"
+#include "util.h"
+
+#include <boost/assign/list_of.hpp>
+
+using namespace boost::assign;
+
+struct SeedSpec6 {
+    uint8_t addr[16];
+    uint16_t port;
+};
+
+#include "chainparamsseeds.h"
+
+//
+// Main network
+//
+
+// Convert the pnSeeds6 array into usable address objects.
+static void convertSeed6(std::vector<CAddress> &vSeedsOut, const SeedSpec6 *data, unsigned int count)
+{
+    // It'll only connect to one or two seed nodes because once it connects,
+    // it'll get a pile of addresses with newer timestamps.
+    // Seed nodes are given a random 'last seen time' of between one and two
+    // weeks ago.
+    const int64_t nOneWeek = 7*24*60*60;
+    for (unsigned int i = 0; i < count; i++)
+    {
+        struct in6_addr ip;
+        memcpy(&ip, data[i].addr, sizeof(ip));
+        CAddress addr(CService(ip, data[i].port));
+        addr.nTime = GetTime() - GetRand(nOneWeek) - nOneWeek;
+        vSeedsOut.push_back(addr);
+    }
+}
+
+class CMainParams : public CChainParams {
+public:
+    CMainParams() {
+        // The message start string is designed to be unlikely to occur in normal data.
+        // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
+        // a large 4-byte int at any alignment.
+        pchMessageStart[0] = 0x16;
+        pchMessageStart[1] = 0x48;
+        pchMessageStart[2] = 0x57;
+        pchMessageStart[3] = 0x40;
+        vAlertPubKey = ParseHex("");
+        nDefaultPort = 28880;
+        nRPCPort = 28881;
+        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 20);
+
+        const char* pszTimestamp = "Ethernode to the moon";
+        std::vector<CTxIn> vin;
+        vin.resize(1);
+        vin[0].scriptSig = CScript() << 0 << CBigNum(42) << vector<unsigned char>((const unsigned char*)pszTimestamp, (const unsigned char*)pszTimestamp + strlen(pszTimestamp));
+        std::vector<CTxOut> vout;
+        vout.resize(1);
+        vout[0].nValue = 1 * COIN;
+        vout[0].SetEmpty();
+        CTransaction txNew(1, 1514406711, vin, vout, 0);
+        genesis.vtx.push_back(txNew);
+        genesis.hashPrevBlock = 0;
+        genesis.hashMerkleRoot = genesis.BuildMerkleTree();
+        genesis.nVersion = 1;
+        genesis.nTime    = 1514406711;
+        genesis.nBits    = bnProofOfWorkLimit.GetCompact();
+        genesis.nNonce   = 370717;
+
+        hashGenesisBlock = genesis.GetHash();
+
+        assert(hashGenesisBlock == uint256("0x00000c81d7cd10db5b8edd306773cf9007636cac919be95c554f0a7211c9dfc1"));
+        assert(genesis.hashMerkleRoot == uint256("0x1da16f69266ca5af72b12e894bbb7bad64d53c4f79696cd63135e22fab8d3aa2"));
+
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,33);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,137);
+        base58Prefixes[SECRET_KEY] =     std::vector<unsigned char>(1,161);
+        base58Prefixes[STEALTH_ADDRESS] = std::vector<unsigned char>(1,40);
+        base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x04)(0x88)(0xB2)(0x1E).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_SECRET_KEY] = list_of(0x04)(0x88)(0xAD)(0xE4).convert_to_container<std::vector<unsigned char> >();
+
+        vSeeds.push_back(CDNSSeedData("ethernode",  "nodes.ethernodecoin.com"));
+   	convertSeed6(vFixedSeeds, pnSeed6_main, ARRAYLEN(pnSeed6_main));
+
+
+        nPoolMaxTransactions = 3;
+        //strSporkKey = "046f78dcf911fbd61910136f7f0f8d90578f68d0b3ac973b5040fb7afb501b5939f39b108b0569dca71488f5bbf498d92e4d1194f6f941307ffd95f75e76869f0e";
+        //strMasternodePaymentsPubKey = "046f78dcf911fbd61910136f7f0f8d90578f68d0b3ac973b5040fb7afb501b5939f39b108b0569dca71488f5bbf498d92e4d1194f6f941307ffd95f75e76869f0e";
+        strDarksendPoolDummyAddress = "";
+        nLastPOWBlock = 3000;
+        nPOSStartBlock = 1001;
+    }
+
+    virtual const CBlock& GenesisBlock() const { return genesis; }
+    virtual Network NetworkID() const { return CChainParams::MAIN; }
+
+    virtual const vector<CAddress>& FixedSeeds() const {
+        return vFixedSeeds;
+    }
+protected:
+    CBlock genesis;
+    vector<CAddress> vFixedSeeds;
+};
+static CMainParams mainParams;
+
+
+//
+// Testnet
+//
+
+class CTestNetParams : public CMainParams {
+public:
+    CTestNetParams() {
+        // The message start string is designed to be unlikely to occur in normal data.
+        // The characters are rarely used upper ASCII, not valid as UTF-8, and produce
+        // a large 4-byte int at any alignment.
+        pchMessageStart[0] = 0x2f;
+        pchMessageStart[1] = 0xca;
+        pchMessageStart[2] = 0x4d;
+        pchMessageStart[3] = 0x3e;
+        bnProofOfWorkLimit = CBigNum(~uint256(0) >> 16);
+        vAlertPubKey = ParseHex("");
+        nDefaultPort = 28180;
+        nRPCPort = 28181;
+        strDataDir = "testnet";
+
+        // Modify the testnet genesis block so the timestamp is valid for a later start.
+        genesis.nBits  = 1514406836; 
+        genesis.nNonce = 35117;
+
+
+        vFixedSeeds.clear();
+        vSeeds.clear();
+
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,33);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,137);
+        base58Prefixes[SECRET_KEY]     = std::vector<unsigned char>(1,161);
+        base58Prefixes[STEALTH_ADDRESS] = std::vector<unsigned char>(1,40);
+        base58Prefixes[EXT_PUBLIC_KEY] = list_of(0x04)(0x35)(0x87)(0xCF).convert_to_container<std::vector<unsigned char> >();
+        base58Prefixes[EXT_SECRET_KEY] = list_of(0x04)(0x35)(0x83)(0x94).convert_to_container<std::vector<unsigned char> >();
+
+        nLastPOWBlock = 0x7fffffff;
+    }
+    virtual Network NetworkID() const { return CChainParams::TESTNET; }
+};
+static CTestNetParams testNetParams;
+
+
+static CChainParams *pCurrentParams = &mainParams;
+
+const CChainParams &Params() {
+    return *pCurrentParams;
+}
+
+void SelectParams(CChainParams::Network network) {
+    switch (network) {
+        case CChainParams::MAIN:
+            pCurrentParams = &mainParams;
+            break;
+        case CChainParams::TESTNET:
+            pCurrentParams = &testNetParams;
+            break;
+        default:
+            assert(false && "Unimplemented network");
+            return;
+    }
+}
+
+bool SelectParamsFromCommandLine() {
+    
+    bool fTestNet = GetBoolArg("-testnet", false);
+    
+    if (fTestNet) {
+        SelectParams(CChainParams::TESTNET);
+    } else {
+        SelectParams(CChainParams::MAIN);
+    }
+    return true;
+}
